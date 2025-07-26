@@ -1,0 +1,175 @@
+// lib/analytics.ts
+import { ContentItem } from "../app/[contentType]/[slug]/page";
+
+// Analytics tracking functions
+export const trackPageView = (content: ContentItem, contentType: string, slug: string) => {
+  // Google Analytics 4
+  if (typeof gtag !== "undefined") {
+    gtag("event", "page_view", {
+      page_title: content.title,
+      page_location: window.location.href,
+      content_type: contentType,
+      content_id: slug,
+      ...(content.author && { author: content.author }),
+      ...(content.category && { category: content.category }),
+    });
+  }
+
+  // Facebook Pixel
+  if (typeof fbq !== "undefined") {
+    fbq("track", "ViewContent", {
+      content_name: content.title,
+      content_category: content.category,
+      content_type: contentType,
+    });
+  }
+};
+
+export const trackContentEngagement = (content: ContentItem, contentType: string, slug: string) => {
+  if (typeof gtag !== "undefined") {
+    gtag("event", "content_view", {
+      content_type: contentType,
+      content_id: slug,
+      ...(contentType === "blog" && "readingTime" in content && { 
+        estimated_reading_time: content.readingTime 
+      }),
+    });
+  }
+};
+
+export const trackScrollProgress = (progress: number, contentType: string, slug: string) => {
+  if (typeof gtag !== "undefined" && progress % 25 === 0) {
+    gtag("event", "scroll", {
+      content_type: contentType,
+      content_id: slug,
+      scroll_progress: progress,
+    });
+  }
+};
+
+export const trackSearchConsole = (content: ContentItem, contentType: string) => {
+  // Google Search Console structured data validation
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": getSchemaType(contentType),
+    name: content.title,
+    description: content.description,
+    url: window.location.href,
+    datePublished: content.publishedAt,
+    dateModified: content.updatedAt,
+  };
+
+  // Send to Google Search Console API if available
+  if ("searchConsole" in window) {
+    (window as any).searchConsole.sendStructuredData(structuredData);
+  }
+};
+
+function getSchemaType(contentType: string): string {
+  const schemaTypes = {
+    blog: "BlogPosting",
+    products: "Product",
+    events: "Event",
+  };
+  return schemaTypes[contentType as keyof typeof schemaTypes] || "WebPage";
+}
+
+// Performance monitoring
+export const trackCoreWebVitals = () => {
+  // Track Core Web Vitals
+  if (typeof gtag !== "undefined") {
+    import("web-vitals").then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS((metric) => {
+        gtag("event", "web_vitals", {
+          event_category: "Web Vitals",
+          event_label: "CLS",
+          value: Math.round(metric.value * 1000),
+        });
+      });
+
+      getFID((metric) => {
+        gtag("event", "web_vitals", {
+          event_category: "Web Vitals",
+          event_label: "FID",
+          value: Math.round(metric.value),
+        });
+      });
+
+      getFCP((metric) => {
+        gtag("event", "web_vitals", {
+          event_category: "Web Vitals",
+          event_label: "FCP",
+          value: Math.round(metric.value),
+        });
+      });
+
+      getLCP((metric) => {
+        gtag("event", "web_vitals", {
+          event_category: "Web Vitals",
+          event_label: "LCP",
+          value: Math.round(metric.value),
+        });
+      });
+
+      getTTFB((metric) => {
+        gtag("event", "web_vitals", {
+          event_category: "Web Vitals",
+          event_label: "TTFB",
+          value: Math.round(metric.value),
+        });
+      });
+    });
+  }
+};
+
+// Error tracking
+export const trackError = (error: Error, contentType: string, slug: string) => {
+  if (typeof gtag !== "undefined") {
+    gtag("event", "exception", {
+      description: error.message,
+      fatal: false,
+      custom_map: {
+        content_type: contentType,
+        content_id: slug,
+      },
+    });
+  }
+
+  // Send to error tracking service (e.g., Sentry)
+  if (typeof Sentry !== "undefined") {
+    Sentry.captureException(error, {
+      tags: {
+        contentType,
+        slug,
+      },
+    });
+  }
+};
+
+// Social media sharing tracking
+export const trackSocialShare = (platform: string, contentType: string, slug: string) => {
+  if (typeof gtag !== "undefined") {
+    gtag("event", "share", {
+      method: platform,
+      content_type: contentType,
+      content_id: slug,
+    });
+  }
+};
+
+// Custom event tracking for business metrics
+export const trackBusinessMetrics = (content: ContentItem, contentType: string, slug: string) => {
+  if (typeof gtag !== "undefined") {
+    // Track content performance metrics
+    gtag("event", "content_metrics", {
+      content_type: contentType,
+      content_id: slug,
+      ...(content.category && { category: content.category }),
+      ...(content.tags && { tags: content.tags.join(",") }),
+      ...(contentType === "products" && "price" in content && { 
+        item_value: content.price,
+        currency: content.currency,
+      }),
+    });
+  }
+};

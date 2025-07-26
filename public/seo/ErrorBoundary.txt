@@ -1,0 +1,148 @@
+// components/ErrorBoundary.tsx
+"use client";
+
+import React from "react";
+import { trackError } from "../lib/analytics";
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  contentType?: string;
+  slug?: string;
+}
+
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return {
+      hasError: true,
+      error,
+      errorInfo: null,
+    };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    this.setState({
+      error,
+      errorInfo,
+    });
+
+    // Track error for analytics
+    if (this.props.contentType && this.props.slug) {
+      trackError(error, this.props.contentType, this.props.slug);
+    }
+
+    // Log error to console in development
+    if (process.env.NODE_ENV === "development") {
+      console.error("ErrorBoundary caught an error:", error, errorInfo);
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      return (
+        <div className="error-boundary">
+          <div className="error-container">
+            <h2>Something went wrong</h2>
+            <p>We're sorry, but something unexpected happened. Please try refreshing the page.</p>
+            
+            {process.env.NODE_ENV === "development" && (
+              <details className="error-details">
+                <summary>Error Details (Development Only)</summary>
+                <pre>{this.state.error?.message}</pre>
+                <pre>{this.state.error?.stack}</pre>
+                {this.state.errorInfo && (
+                  <pre>{this.state.errorInfo.componentStack}</pre>
+                )}
+              </details>
+            )}
+            
+            <button 
+              onClick={() => window.location.reload()} 
+              className="retry-button"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Simplified functional error boundary for specific use cases
+export function SimpleErrorBoundary({ 
+  children, 
+  fallback 
+}: { 
+  children: React.ReactNode; 
+  fallback?: React.ReactNode;
+}) {
+  return (
+    <ErrorBoundary fallback={fallback}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+// Hook for error handling in functional components
+export function useErrorHandler(contentType?: string, slug?: string) {
+  const handleError = React.useCallback((error: Error) => {
+    if (contentType && slug) {
+      trackError(error, contentType, slug);
+    }
+    
+    // Re-throw the error so it can be caught by ErrorBoundary
+    throw error;
+  }, [contentType, slug]);
+
+  return handleError;
+}
+
+// Async error boundary for handling promise rejections
+export function AsyncErrorBoundary({ 
+  children,
+  fallback,
+  contentType,
+  slug
+}: ErrorBoundaryProps) {
+  React.useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (contentType && slug) {
+        trackError(new Error(event.reason), contentType, slug);
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [contentType, slug]);
+
+  return (
+    <ErrorBoundary fallback={fallback} contentType={contentType} slug={slug}>
+      {children}
+    </ErrorBoundary>
+  );
+}

@@ -1,0 +1,96 @@
+import React from "react";
+import { Button } from "../../components/ui/button";
+import { RotateCw, X } from "lucide-react";
+import ReusableForm from "./reusable-form";
+import { FieldValues } from "react-hook-form";
+import { FormModalProps } from "@/types/components/form-modal";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+export default function FormModal<T extends FieldValues>({
+  title,
+  subTitle,
+  fields,
+  schema,
+  defaultValues,
+  handleSubmit,
+  setModalState,
+  isSubmitting,
+  setIsSubmitting,
+}: FormModalProps<T>) {
+  const handleClose = () => {
+    setModalState((prev) => ({
+      ...prev,
+      add: false,
+      edit: { ...prev.edit, id: "" },
+      delete: "",
+    }));
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div
+      onClick={handleClose}
+      className="overflow-y-auto fixed inset-0 z-10 bg-black/50 grid place-items-center p-6"
+    >
+      <Card onClick={(e) => e.stopPropagation()} className="gap-0">
+        <CardHeader className="border-b">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{subTitle}</CardDescription>
+
+          <CardAction>
+            <Button
+              type="button"
+              variant={"ghost"}
+              size={"icon"}
+              className="cursor-pointer"
+              onClick={handleClose}
+            >
+              <X className="icon-base" />
+            </Button>
+          </CardAction>
+        </CardHeader>
+
+        <ReusableForm
+          fields={fields}
+          schema={schema}
+          defaultValues={defaultValues}
+          handleSubmit={(data) => handleSubmit(data)}
+          className="p-6"
+        >
+          <CardFooter className="border-t flex items-center gap-2 justify-end">
+            <Button
+              onClick={handleClose}
+              type="button"
+              variant={"outline"}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={isSubmitting}
+              type="submit"
+              className="cursor-pointer"
+            >
+              {isSubmitting ? (
+                <>
+                  <RotateCw className="icon-base animate-spin" />
+                  Submitting
+                </>
+              ) : (
+                "Submit"
+              )}
+            </Button>
+          </CardFooter>
+        </ReusableForm>
+      </Card>
+    </div>
+  );
+}

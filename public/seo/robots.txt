@@ -1,0 +1,45 @@
+/public/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /_next/static/
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*.json$
+Disallow: /*.xml$
+
+# Crawl budget optimization
+Crawl-delay: 2
+Request-rate: 1/5
+
+# Sitemaps (prioritize HTTPS)
+Sitemap: https://${process.env.NEXT_PUBLIC_SITE_URL}/sitemap.xml
+Sitemap: https://${process.env.NEXT_PUBLIC_SITE_URL}/sitemap-articles.xml
+
+# Special bot rules
+User-agent: Googlebot
+Allow: /*.css$
+Allow: /*.js$
+Disallow: /preview/
+Disallow: /drafts/
+Crawl-delay: 1
+
+User-agent: Googlebot-Image
+Allow: /images/
+Disallow: /images/private/
+Disallow: /images/temp/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /search/
+Disallow: /user/
+Crawl-delay: 3
+
+User-agent: Yandex
+Disallow: /user/
+Clean-param: ref /blog/
+Clean-param: utm_source /
+Host: ${process.env.NEXT_PUBLIC_SITE_URL}

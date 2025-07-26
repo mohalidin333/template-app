@@ -1,0 +1,222 @@
+// lib/performance.ts
+import { trackCoreWebVitals } from "./analytics";
+
+// Performance monitoring setup
+export function initializePerformanceMonitoring() {
+  if (typeof window !== "undefined") {
+    // Track Core Web Vitals
+    trackCoreWebVitals();
+
+    // Monitor page load performance
+    window.addEventListener("load", () => {
+      const perfData = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
+      
+      if (typeof gtag !== "undefined") {
+        gtag("event", "page_load_time", {
+          event_category: "Performance",
+          event_label: "Load Time",
+          value: Math.round(perfData.loadEventEnd - perfData.loadEventStart),
+        });
+      }
+    });
+
+    // Monitor resource loading
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.entryType === "resource") {
+          const resourceEntry = entry as PerformanceResourceTiming;
+          
+          // Track slow resources
+          if (resourceEntry.duration > 1000) {
+            if (typeof gtag !== "undefined") {
+              gtag("event", "slow_resource", {
+                event_category: "Performance",
+                event_label: resourceEntry.name,
+                value: Math.round(resourceEntry.duration),
+              });
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe({ entryTypes: ["resource"] });
+  }
+}
+
+// SEO health check
+export function performSEOHealthCheck() {
+  if (typeof window === "undefined") return;
+
+  const issues: string[] = [];
+
+  // Check for essential SEO elements
+  const title = document.querySelector("title");
+  const metaDescription = document.querySelector('meta[name="description"]');
+  const h1 = document.querySelector("h1");
+  const canonicalLink = document.querySelector('link[rel="canonical"]');
+
+  if (!title || title.textContent?.length === 0) {
+    issues.push("Missing or empty title tag");
+  } else if (title.textContent.length > 60) {
+    issues.push("Title tag too long (over 60 characters)");
+  }
+
+  if (!metaDescription) {
+    issues.push("Missing meta description");
+  } else {
+    const description = metaDescription.getAttribute("content");
+    if (!description || description.length === 0) {
+      issues.push("Empty meta description");
+    } else if (description.length > 160) {
+      issues.push("Meta description too long (over 160 characters)");
+    }
+  }
+
+  if (!h1) {
+    issues.push("Missing H1 tag");
+  } else if (document.querySelectorAll("h1").length > 1) {
+    issues.push("Multiple H1 tags found");
+  }
+
+  if (!canonicalLink) {
+    issues.push("Missing canonical link");
+  }
+
+  // Check for structured data
+  const structuredData = document.querySelector('script[type="application/ld+json"]');
+  if (!structuredData) {
+    issues.push("Missing structured data (JSON-LD)");
+  }
+
+  // Check for Open Graph tags
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  const ogDescription = document.querySelector('meta[property="og:description"]');
+  const ogImage = document.querySelector('meta[property="og:image"]');
+
+  if (!ogTitle) issues.push("Missing Open Graph title");
+  if (!ogDescription) issues.push("Missing Open Graph description");
+  if (!ogImage) issues.push("Missing Open Graph image");
+
+  // Log issues in development
+  if (process.env.NODE_ENV === "development" && issues.length > 0) {
+    console.warn("SEO Issues Found:", issues);
+  }
+
+  // Track SEO health score
+  if (typeof gtag !== "undefined") {
+    gtag("event", "seo_health_check", {
+      event_category: "SEO",
+      event_label: "Health Score",
+      value: Math.round(((8 - issues.length) / 8) * 100),
+    });
+  }
+
+  return issues;
+}
+
+// Image optimization checker
+export function checkImageOptimization() {
+  if (typeof window === "undefined") return;
+
+  const images = document.querySelectorAll("img");
+  const issues: string[] = [];
+
+  images.forEach((img, index) => {
+    // Check for alt text
+    if (!img.alt || img.alt.trim() === "") {
+      issues.push(`Image ${index + 1}: Missing alt text`);
+    }
+
+    // Check for loading attribute
+    if (!img.loading) {
+      issues.push(`Image ${index + 1}: Missing loading attribute`);
+    }
+
+    // Check for large images
+    if (img.naturalWidth > 1200 || img.naturalHeight > 1200) {
+      issues.push(`Image ${index + 1}: Large dimensions (${img.naturalWidth}x${img.naturalHeight})`);
+    }
+  });
+
+  if (process.env.NODE_ENV === "development" && issues.length > 0) {
+    console.warn("Image Optimization Issues:", issues);
+  }
+
+  return issues;
+}
+
+// Accessibility checker
+export function checkAccessibility() {
+  if (typeof window === "undefined") return;
+
+  const issues: string[] = [];
+
+  // Check for skip links
+  const skipLink = document.querySelector('a[href="#main"], a[href="#content"]');
+  if (!skipLink) {
+    issues.push("Missing skip link for accessibility");
+  }
+
+  // Check for proper heading hierarchy
+  const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+  let lastLevel = 0;
+  
+  headings.forEach((heading) => {
+    const level = parseInt(heading.tagName.charAt(1));
+    if (level > lastLevel + 1) {
+      issues.push(`Heading hierarchy skip: ${heading.tagName} after H${lastLevel}`);
+    }
+    lastLevel = level;
+  });
+
+  // Check for form labels
+  const inputs = document.querySelectorAll("input, textarea, select");
+  inputs.forEach((input, index) => {
+    const id = input.getAttribute("id");
+    const label = id ? document.querySelector(`label[for="${id}"]`) : null;
+    const ariaLabel = input.getAttribute("aria-label");
+    
+    if (!label && !ariaLabel) {
+      issues.push(`Form element ${index + 1}: Missing label or aria-label`);
+    }
+  });
+
+  // Check for contrast issues (basic check)
+  const elements = document.querySelectorAll("*");
+  elements.forEach((element) => {
+    const computedStyle = window.getComputedStyle(element);
+    const color = computedStyle.color;
+    const backgroundColor = computedStyle.backgroundColor;
+    
+    // This is a simplified check - you'd want a more robust contrast checker
+    if (color === backgroundColor) {
+      issues.push(`Potential contrast issue: ${element.tagName.toLowerCase()}`);
+    }
+  });
+
+  if (process.env.NODE_ENV === "development" && issues.length > 0) {
+    console.warn("Accessibility Issues:", issues);
+  }
+
+  return issues;
+}
+
+// Initialize all monitoring
+export function initializeMonitoring() {
+  if (typeof window !== "undefined") {
+    initializePerformanceMonitoring();
+    
+    // Run checks after page load
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        performSEOHealthCheck();
+        checkImageOptimization();
+        checkAccessibility();
+      }, 1000);
+    });
+  }
+}
+
+// Export for use in _app.tsx or layout.tsx
+export { initializeMonitoring as default };

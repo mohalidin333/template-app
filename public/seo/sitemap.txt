@@ -1,0 +1,96 @@
+// app/sitemap.ts
+import { MetadataRoute } from "next";
+
+// Import your content fetching functions
+async function getAllContent() {
+  // Replace with your actual API calls
+  const baseUrl = "https://yourdomain.com";
+  
+  const contentTypes = ["blog", "products", "events"];
+  const allUrls: MetadataRoute.Sitemap = [];
+
+  // Static pages
+  allUrls.push({
+    url: baseUrl,
+    lastModified: new Date(),
+    changeFrequency: "daily",
+    priority: 1.0,
+  });
+
+  // Dynamic content pages
+  for (const contentType of contentTypes) {
+    // This would be your actual API call
+    const items = await getContentByType(contentType);
+    
+    for (const item of items) {
+      allUrls.push({
+        url: `${baseUrl}/${contentType}/${item.slug}`,
+        lastModified: new Date(item.updatedAt || item.publishedAt || new Date()),
+        changeFrequency: getChangeFrequency(contentType),
+        priority: getPriority(contentType),
+      });
+    }
+
+    // Category/listing pages
+    allUrls.push({
+      url: `${baseUrl}/${contentType}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    });
+  }
+
+  return allUrls;
+}
+
+// Helper function to determine change frequency
+function getChangeFrequency(contentType: string): "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never" {
+  const frequencies = {
+    blog: "weekly" as const,
+    products: "daily" as const,
+    events: "monthly" as const,
+  };
+  return frequencies[contentType as keyof typeof frequencies] || "monthly";
+}
+
+// Helper function to determine priority
+function getPriority(contentType: string): number {
+  const priorities = {
+    blog: 0.8,
+    products: 0.9,
+    events: 0.7,
+  };
+  return priorities[contentType as keyof typeof priorities] || 0.5;
+}
+
+// Mock function - replace with your actual data fetching
+async function getContentByType(contentType: string) {
+  // Sample data structure
+  const sampleData = {
+    blog: [
+      {
+        slug: "hello-world",
+        publishedAt: "2024-01-15T10:00:00Z",
+        updatedAt: "2024-01-16T14:30:00Z",
+      },
+    ],
+    products: [
+      {
+        slug: "awesome-product",
+        publishedAt: "2024-01-10T10:00:00Z",
+      },
+    ],
+    events: [
+      {
+        slug: "tech-conference-2024",
+        publishedAt: "2024-01-05T10:00:00Z",
+      },
+    ],
+  };
+  
+  return sampleData[contentType as keyof typeof sampleData] || [];
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return await getAllContent();
+}

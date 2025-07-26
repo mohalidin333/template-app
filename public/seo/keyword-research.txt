@@ -1,0 +1,56 @@
+/lib/keyword-research.ts
+
+interface KeywordData {
+  keyword: string;
+  volume: number;
+  difficulty: number;
+  cpc: number;
+  trends: number[];
+  related: string[];
+}
+
+export async function getKeywordSuggestions(seed: string): Promise<KeywordData[]> {
+  try {
+    // In a real implementation, this would call an API like Google Keyword Planner
+    const mockData: KeywordData[] = [
+      {
+        keyword: seed,
+        volume: 1000,
+        difficulty: 65,
+        cpc: 1.5,
+        trends: [45, 67, 89, 76, 88, 92, 100, 95, 87, 90, 85, 82],
+        related: [`${seed} tips`, `best ${seed}`, `how to ${seed}`],
+      },
+      // More mock data...
+    ];
+
+    return mockData;
+  } catch (error) {
+    console.error('Keyword research failed:', error);
+    return [];
+  }
+}
+
+export function analyzeKeywordDensity(content: string, keywords: string[]) {
+  const words = content.toLowerCase().match(/\b\w+\b/g) || [];
+  const totalWords = words.length;
+  
+  return keywords.map(keyword => {
+    const occurrences = (content.toLowerCase().match(new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'g')) || [];
+    return {
+      keyword,
+      count: occurrences.length,
+      density: (occurrences.length / totalWords) * 100,
+    };
+  });
+}
+
+export function getLSIKeywords(keyword: string) {
+  // Latent Semantic Indexing keywords - would normally come from an API
+  const lsiMap: Record<string, string[]> = {
+    'seo': ['search engine optimization', 'google ranking', 'backlinks', 'on-page seo', 'off-page seo'],
+    'nextjs': ['react framework', 'server components', 'vercel', 'static generation', 'dynamic routing'],
+  };
+
+  return lsiMap[keyword.toLowerCase()] || [];
+}

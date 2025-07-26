@@ -1,0 +1,476 @@
+// app/[contentType]/[slug]/page.tsx
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+// Types for different content types
+interface BaseContent {
+  slug: string;
+  title: string;
+  description: string;
+  image?: string;
+  author?: string;
+  publishedAt?: string;
+  updatedAt?: string;
+  tags?: string[];
+  category?: string;
+  readingTime?: number;
+  canonical?: string;
+}
+
+interface BlogPost extends BaseContent {
+  content: string;
+  excerpt?: string;
+}
+
+interface Product extends BaseContent {
+  price?: number;
+  currency?: string;
+  availability?: string;
+  brand?: string;
+  sku?: string;
+  rating?: number;
+  reviewCount?: number;
+}
+
+interface Event extends BaseContent {
+  startDate?: string;
+  endDate?: string;
+  location?: string;
+  organizer?: string;
+  ticketPrice?: number;
+}
+
+type ContentItem = BlogPost | Product | Event;
+
+// Configuration for different content types
+const contentTypeConfig = {
+  blog: {
+    siteName: "Your Blog",
+    baseUrl: "https://yourdomain.com/blog",
+    defaultImage: "https://yourdomain.com/default-blog-image.jpg",
+    type: "article" as const,
+  },
+  products: {
+    siteName: "Your Store",
+    baseUrl: "https://yourdomain.com/products",
+    defaultImage: "https://yourdomain.com/default-product-image.jpg",
+    type: "product" as const,
+  },
+  events: {
+    siteName: "Your Events",
+    baseUrl: "https://yourdomain.com/events",
+    defaultImage: "https://yourdomain.com/default-event-image.jpg",
+    type: "event" as const,
+  },
+};
+
+// Simulate your DB or API - replace with actual data fetching
+async function getContentBySlug(contentType: string, slug: string): Promise<ContentItem | null> {
+  // Sample data - replace with your actual API calls
+  const sampleData: Record<string, ContentItem[]> = {
+    blog: [
+      {
+        slug: "hello-world",
+        title: "Hello World - Getting Started with Next.js",
+        description: "Learn how to build modern web applications with Next.js, including SEO optimization and best practices.",
+        content: "Full blog post content here...",
+        image: "https://example.com/hello-world.jpg",
+        author: "John Doe",
+        publishedAt: "2024-01-15T10:00:00Z",
+        updatedAt: "2024-01-16T14:30:00Z",
+        tags: ["nextjs", "react", "web-development"],
+        category: "Tutorial",
+        readingTime: 5,
+        excerpt: "A comprehensive guide to getting started with Next.js",
+        canonical: "https://yourdomain.com/blog/hello-world",
+      },
+    ],
+    products: [
+      {
+        slug: "awesome-product",
+        title: "Awesome Product - Premium Quality",
+        description: "High-quality product with excellent features and customer satisfaction guarantee.",
+        image: "https://example.com/product.jpg",
+        price: 99.99,
+        currency: "USD",
+        availability: "in_stock",
+        brand: "Your Brand",
+        sku: "SKU123",
+        rating: 4.8,
+        reviewCount: 156,
+        tags: ["premium", "quality"],
+        category: "Electronics",
+      },
+    ],
+    events: [
+      {
+        slug: "tech-conference-2024",
+        title: "Tech Conference 2024 - Future of Web Development",
+        description: "Join us for an exciting conference about the latest trends in web development and technology.",
+        image: "https://example.com/conference.jpg",
+        startDate: "2024-03-15T09:00:00Z",
+        endDate: "2024-03-15T17:00:00Z",
+        location: "San Francisco, CA",
+        organizer: "Tech Events Inc",
+        ticketPrice: 299,
+        tags: ["conference", "tech", "web-development"],
+        category: "Technology",
+      },
+    ],
+  };
+
+  const items = sampleData[contentType];
+  return items?.find((item) => item.slug === slug) || null;
+}
+
+type Props = {
+  params: { contentType: string; slug: string };
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { contentType, slug } = params;
+  
+  // Validate content type
+  if (!contentTypeConfig[contentType as keyof typeof contentTypeConfig]) {
+    return {
+      title: "Page not found",
+      description: "This page does not exist.",
+    };
+  }
+
+  const config = contentTypeConfig[contentType as keyof typeof contentTypeConfig];
+  const content = await getContentBySlug(contentType, slug);
+
+  if (!content) {
+    return {
+      title: "Content not found",
+      description: `This ${contentType.slice(0, -1)} does not exist.`,
+    };
+  }
+
+  const imageUrl = content.image || config.defaultImage;
+  const url = `${config.baseUrl}/${slug}`;
+  
+  // Generate keywords from tags and category
+  const keywords = [
+    ...(content.tags || []),
+    content.category,
+    contentType,
+    config.siteName.toLowerCase(),
+  ].filter(Boolean).join(", ");
+
+  // Base metadata
+  const metadata: Metadata = {
+    title: content.title,
+    description: content.description,
+    keywords,
+    authors: content.author ? [{ name: content.author }] : undefined,
+    category: content.category,
+    
+    // Open Graph
+    openGraph: {
+      title: content.title,
+      description: content.description,
+      url,
+      siteName: config.siteName,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: content.title,
+        },
+      ],
+      type: config.type === "article" ? "article" : "website",
+      locale: "en_US",
+      ...(content.publishedAt && { publishedTime: content.publishedAt }),
+      ...(content.updatedAt && { modifiedTime: content.updatedAt }),
+      ...(content.author && { authors: [content.author] }),
+      ...(content.tags && { tags: content.tags }),
+    },
+
+    // Twitter
+    twitter: {
+      card: "summary_large_image",
+      title: content.title,
+      description: content.description,
+      images: [imageUrl],
+      creator: content.author ? `@${content.author.replace(/\s+/g, '').toLowerCase()}` : undefined,
+    },
+
+    // Additional SEO tags
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+
+    // Canonical URL
+    alternates: {
+      canonical: content.canonical || url,
+    },
+  };
+
+  // Content-type specific metadata
+  if (config.type === "article" && "publishedAt" in content) {
+    metadata.openGraph = {
+      ...metadata.openGraph,
+      type: "article",
+      publishedTime: content.publishedAt,
+      modifiedTime: content.updatedAt,
+      authors: content.author ? [content.author] : undefined,
+      tags: content.tags,
+    };
+  }
+
+  return metadata;
+}
+
+// Generate static params for better performance (optional)
+export async function generateStaticParams() {
+  // This would typically fetch all your content slugs from your CMS/DB
+  // Example implementation:
+  const contentTypes = ["blog", "products", "events"];
+  const params = [];
+
+  for (const contentType of contentTypes) {
+    // Replace with actual data fetching
+    const slugs = ["hello-world", "awesome-product", "tech-conference-2024"];
+    
+    for (const slug of slugs) {
+      params.push({ contentType, slug });
+    }
+  }
+
+  return params;
+}
+
+export default async function DynamicContentPage({ params }: Props) {
+  const { contentType, slug } = params;
+  
+  // Validate content type
+  if (!contentTypeConfig[contentType as keyof typeof contentTypeConfig]) {
+    notFound();
+  }
+
+  const content = await getContentBySlug(contentType, slug);
+
+  if (!content) {
+    notFound();
+  }
+
+  // Generate JSON-LD structured data
+  const generateStructuredData = () => {
+    const baseStructuredData = {
+      "@context": "https://schema.org",
+      "@type": getSchemaType(contentType),
+      name: content.title,
+      description: content.description,
+      image: content.image,
+      url: `${contentTypeConfig[contentType as keyof typeof contentTypeConfig].baseUrl}/${slug}`,
+    };
+
+    // Add content-specific structured data
+    if (contentType === "blog" && "publishedAt" in content) {
+      return {
+        ...baseStructuredData,
+        "@type": "BlogPosting",
+        headline: content.title,
+        datePublished: content.publishedAt,
+        dateModified: content.updatedAt || content.publishedAt,
+        author: {
+          "@type": "Person",
+          name: content.author,
+        },
+        publisher: {
+          "@type": "Organization",
+          name: contentTypeConfig.blog.siteName,
+        },
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": `${contentTypeConfig.blog.baseUrl}/${slug}`,
+        },
+      };
+    }
+
+    if (contentType === "products" && "price" in content) {
+      return {
+        ...baseStructuredData,
+        "@type": "Product",
+        brand: {
+          "@type": "Brand",
+          name: content.brand,
+        },
+        sku: content.sku,
+        offers: {
+          "@type": "Offer",
+          price: content.price,
+          priceCurrency: content.currency,
+          availability: `https://schema.org/${content.availability === "in_stock" ? "InStock" : "OutOfStock"}`,
+        },
+        ...(content.rating && {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: content.rating,
+            reviewCount: content.reviewCount,
+          },
+        }),
+      };
+    }
+
+    if (contentType === "events" && "startDate" in content) {
+      return {
+        ...baseStructuredData,
+        "@type": "Event",
+        startDate: content.startDate,
+        endDate: content.endDate,
+        location: {
+          "@type": "Place",
+          name: content.location,
+        },
+        organizer: {
+          "@type": "Organization",
+          name: content.organizer,
+        },
+        ...(content.ticketPrice && {
+          offers: {
+            "@type": "Offer",
+            price: content.ticketPrice,
+            priceCurrency: "USD",
+            availability: "https://schema.org/InStock",
+          },
+        }),
+      };
+    }
+
+    return baseStructuredData;
+  };
+
+  const structuredData = generateStructuredData();
+
+  return (
+    <>
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData),
+        }}
+      />
+      
+      {/* Analytics Integration */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            // Google Analytics 4
+            gtag('event', 'page_view', {
+              page_title: '${content.title}',
+              page_location: window.location.href,
+              content_type: '${contentType}',
+              content_id: '${slug}',
+              ${content.author ? `author: '${content.author}',` : ''}
+              ${content.category ? `category: '${content.category}',` : ''}
+            });
+            
+            // Track content engagement
+            gtag('event', 'content_view', {
+              content_type: '${contentType}',
+              content_id: '${slug}',
+              ${contentType === 'blog' && 'readingTime' in content ? `estimated_reading_time: ${content.readingTime},` : ''}
+            });
+          `,
+        }}
+      />
+      
+      {/* Your page content */}
+      <ContentErrorBoundary 
+        fallback={
+          <div>
+            <h1>Content Unavailable</h1>
+            <p>Sorry, this content is temporarily unavailable. Please try again later.</p>
+          </div>
+        }
+      >
+        <div>
+          <h1>{content.title}</h1>
+          <p>{content.description}</p>
+          
+          {/* Content-specific rendering */}
+          {contentType === "blog" && "content" in content && (
+            <article>
+              <div>
+                {content.author && <p>By: {content.author}</p>}
+                {content.publishedAt && (
+                  <time dateTime={content.publishedAt}>
+                    {new Date(content.publishedAt).toLocaleDateString()}
+                  </time>
+                )}
+                {content.readingTime && <p>{content.readingTime} min read</p>}
+              </div>
+              <div dangerouslySetInnerHTML={{ __html: content.content }} />
+              {content.tags && (
+                <div>
+                  Tags: {content.tags.map(tag => (
+                    <span key={tag}>#{tag} </span>
+                  ))}
+                </div>
+              )}
+            </article>
+          )}
+
+          {contentType === "products" && "price" in content && (
+            <div>
+              <p>Price: ${content.price}</p>
+              <p>Brand: {content.brand}</p>
+              <p>SKU: {content.sku}</p>
+              {content.rating && (
+                <p>Rating: {content.rating}/5 ({content.reviewCount} reviews)</p>
+              )}
+            </div>
+          )}
+
+          {contentType === "events" && "startDate" in content && (
+            <div>
+              <p>Date: {new Date(content.startDate).toLocaleDateString()}</p>
+              <p>Location: {content.location}</p>
+              <p>Organizer: {content.organizer}</p>
+              {content.ticketPrice && <p>Ticket Price: ${content.ticketPrice}</p>}
+            </div>
+          )}
+        </div>
+      </ContentErrorBoundary>
+    </>
+  );
+}
+
+// Helper function to get schema type
+function getSchemaType(contentType: string): string {
+  const schemaTypes = {
+    blog: "BlogPosting",
+    products: "Product",
+    events: "Event",
+  };
+  return schemaTypes[contentType as keyof typeof schemaTypes] || "WebPage";
+}
+
+// Error boundary component for better error handling
+function ContentErrorBoundary({ 
+  children, 
+  fallback 
+}: { 
+  children: React.ReactNode; 
+  fallback: React.ReactNode;
+}) {
+  try {
+    return <>{children}</>;
+  } catch (error) {
+    console.error("Content rendering error:", error);
+    return <>{fallback}</>;
+  }
+}

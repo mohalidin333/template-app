@@ -1,0 +1,581 @@
+# Next.js SEO Setup Guide
+
+## Project Structure
+
+```
+your-nextjs-project/
+├── public/
+│   ├── robots.txt
+│   └── sitemap.xml
+├── src/
+│   ├── components/
+│   │   ├── SEO/
+│   │   │   ├── MetaTags.js
+│   │   │   ├── JsonLd.js
+│   │   │   └── OpenGraph.js
+│   │   └── Layout/
+│   │       └── Layout.js
+│   ├── lib/
+│   │   ├── seo.js
+│   │   └── metadata.js
+│   ├── app/ (App Router)
+│   │   ├── layout.js
+│   │   ├── page.js
+│   │   └── globals.css
+│   └── pages/ (Pages Router - alternative)
+│       ├── _app.js
+│       ├── _document.js
+│       └── index.js
+├── next.config.js
+├── next-sitemap.config.js
+└── package.json
+```
+
+## Installation
+
+First, install the necessary dependencies:
+
+```bash
+npm install next-sitemap next-seo
+```
+
+## Configuration Files
+
+### 1. next.config.js
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    appDir: true, // If using App Router
+  },
+  images: {
+    domains: ['your-domain.com'], // Add your image domains
+    formats: ['image/webp', 'image/avif'],
+  },
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  swcMinify: true,
+}
+
+module.exports = nextConfig
+```
+
+### 2. next-sitemap.config.js
+
+```javascript
+/** @type {import('next-sitemap').IConfig} */
+module.exports = {
+  siteUrl: process.env.SITE_URL || 'https://your-domain.com',
+  generateRobotsTxt: true,
+  exclude: ['/admin/*', '/api/*'],
+  robotsTxtOptions: {
+    policies: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin/', '/api/'],
+      },
+    ],
+  },
+  changefreq: 'daily',
+  priority: 0.7,
+  sitemapSize: 5000,
+}
+```
+
+### 3. package.json Scripts
+
+Add these scripts to your package.json:
+
+```json
+{
+  "scripts": {
+    "build": "next build",
+    "postbuild": "next-sitemap",
+    "dev": "next dev",
+    "start": "next start"
+  }
+}
+```
+
+## Core SEO Files
+
+### 4. src/lib/seo.js
+
+```javascript
+// SEO utility functions and constants
+export const SEO_CONFIG = {
+  siteName: 'Your Site Name',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com',
+  defaultTitle: 'Your Default Title',
+  defaultDescription: 'Your default description for SEO',
+  defaultImage: '/images/og-default.jpg',
+  twitterHandle: '@yourtwitterhandle',
+  lang: 'en',
+}
+
+export const generateMetadata = ({
+  title,
+  description,
+  image,
+  url,
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+}) => {
+  const metaTitle = title ? `${title} | ${SEO_CONFIG.siteName}` : SEO_CONFIG.defaultTitle
+  const metaDescription = description || SEO_CONFIG.defaultDescription
+  const metaImage = image || SEO_CONFIG.defaultImage
+  const metaUrl = url || SEO_CONFIG.siteUrl
+
+  return {
+    title: metaTitle,
+    description: metaDescription,
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+      url: metaUrl,
+      siteName: SEO_CONFIG.siteName,
+      images: [
+        {
+          url: metaImage,
+          width: 1200,
+          height: 630,
+          alt: metaTitle,
+        },
+      ],
+      locale: SEO_CONFIG.lang,
+      type,
+      ...(publishedTime && { publishedTime }),
+      ...(modifiedTime && { modifiedTime }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDescription,
+      images: [metaImage],
+      creator: SEO_CONFIG.twitterHandle,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+  }
+}
+
+export const generateJsonLd = (data) => {
+  const baseData = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SEO_CONFIG.siteName,
+    url: SEO_CONFIG.siteUrl,
+    logo: `${SEO_CONFIG.siteUrl}/images/logo.png`,
+    ...data,
+  }
+
+  return JSON.stringify(baseData)
+}
+```
+
+### 5. src/lib/metadata.js
+
+```javascript
+import { SEO_CONFIG, generateMetadata } from './seo'
+
+// Page-specific metadata configurations
+export const homePageMetadata = generateMetadata({
+  title: 'Home',
+  description: 'Welcome to our website - your one-stop solution for...',
+  url: SEO_CONFIG.siteUrl,
+})
+
+export const aboutPageMetadata = generateMetadata({
+  title: 'About Us',
+  description: 'Learn more about our company, mission, and values.',
+  url: `${SEO_CONFIG.siteUrl}/about`,
+})
+
+export const blogPageMetadata = generateMetadata({
+  title: 'Blog',
+  description: 'Read our latest articles and insights.',
+  url: `${SEO_CONFIG.siteUrl}/blog`,
+})
+
+export const generateBlogPostMetadata = (post) => {
+  return generateMetadata({
+    title: post.title,
+    description: post.excerpt,
+    image: post.featuredImage,
+    url: `${SEO_CONFIG.siteUrl}/blog/${post.slug}`,
+    type: 'article',
+    publishedTime: post.publishedAt,
+    modifiedTime: post.updatedAt,
+  })
+}
+```
+
+## Component Files
+
+### 6. src/components/SEO/MetaTags.js
+
+```javascript
+import Head from 'next/head'
+
+export default function MetaTags({
+  title,
+  description,
+  image,
+  url,
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+}) {
+  const siteName = 'Your Site Name'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com'
+  
+  const metaTitle = title ? `${title} | ${siteName}` : siteName
+  const metaDescription = description || 'Default description'
+  const metaImage = image || '/images/og-default.jpg'
+  const metaUrl = url || siteUrl
+
+  return (
+    <Head>
+      <title>{metaTitle}</title>
+      <meta name="description" content={metaDescription} />
+      <meta name="robots" content="index, follow" />
+      <link rel="canonical" href={metaUrl} />
+      
+      {/* Open Graph */}
+      <meta property="og:title" content={metaTitle} />
+      <meta property="og:description" content={metaDescription} />
+      <meta property="og:image" content={metaImage} />
+      <meta property="og:url" content={metaUrl} />
+      <meta property="og:type" content={type} />
+      <meta property="og:site_name" content={siteName} />
+      {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+      {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+      
+      {/* Twitter */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={metaTitle} />
+      <meta name="twitter:description" content={metaDescription} />
+      <meta name="twitter:image" content={metaImage} />
+      
+      {/* Additional meta tags */}
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+      <meta name="language" content="English" />
+    </Head>
+  )
+}
+```
+
+### 7. src/components/SEO/JsonLd.js
+
+```javascript
+import Head from 'next/head'
+
+export default function JsonLd({ data }) {
+  return (
+    <Head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(data),
+        }}
+      />
+    </Head>
+  )
+}
+```
+
+### 8. src/components/SEO/OpenGraph.js
+
+```javascript
+import Head from 'next/head'
+
+export default function OpenGraph({ 
+  title, 
+  description, 
+  image, 
+  url, 
+  type = 'website' 
+}) {
+  return (
+    <Head>
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={image} />
+      <meta property="og:url" content={url} />
+      <meta property="og:type" content={type} />
+      <meta property="og:site_name" content="Your Site Name" />
+      
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={image} />
+    </Head>
+  )
+}
+```
+
+## App Router Implementation (Next.js 13+)
+
+### 9. src/app/layout.js
+
+```javascript
+import { SEO_CONFIG } from '@/lib/seo'
+import './globals.css'
+
+export const metadata = {
+  title: {
+    template: `%s | ${SEO_CONFIG.siteName}`,
+    default: SEO_CONFIG.defaultTitle,
+  },
+  description: SEO_CONFIG.defaultDescription,
+  keywords: ['your', 'keywords', 'here'],
+  authors: [{ name: 'Your Name' }],
+  creator: 'Your Name',
+  publisher: SEO_CONFIG.siteName,
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: SEO_CONFIG.defaultTitle,
+    description: SEO_CONFIG.defaultDescription,
+    url: SEO_CONFIG.siteUrl,
+    siteName: SEO_CONFIG.siteName,
+    images: [
+      {
+        url: SEO_CONFIG.defaultImage,
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SEO_CONFIG.defaultTitle,
+    description: SEO_CONFIG.defaultDescription,
+    images: [SEO_CONFIG.defaultImage],
+    creator: SEO_CONFIG.twitterHandle,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+      </body>
+    </html>
+  )
+}
+```
+
+### 10. src/app/page.js
+
+```javascript
+import { homePageMetadata } from '@/lib/metadata'
+
+export const metadata = homePageMetadata
+
+export default function Home() {
+  return (
+    <main>
+      <h1>Welcome to Our Website</h1>
+      <p>Your content here...</p>
+    </main>
+  )
+}
+```
+
+## Pages Router Implementation (Alternative)
+
+### 11. src/pages/_app.js
+
+```javascript
+import { DefaultSeo } from 'next-seo'
+import { SEO_CONFIG } from '@/lib/seo'
+
+const defaultSEOConfig = {
+  titleTemplate: `%s | ${SEO_CONFIG.siteName}`,
+  defaultTitle: SEO_CONFIG.defaultTitle,
+  description: SEO_CONFIG.defaultDescription,
+  canonical: SEO_CONFIG.siteUrl,
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: SEO_CONFIG.siteUrl,
+    siteName: SEO_CONFIG.siteName,
+    images: [
+      {
+        url: SEO_CONFIG.defaultImage,
+        width: 1200,
+        height: 630,
+        alt: SEO_CONFIG.siteName,
+      },
+    ],
+  },
+  twitter: {
+    handle: SEO_CONFIG.twitterHandle,
+    site: SEO_CONFIG.twitterHandle,
+    cardType: 'summary_large_image',
+  },
+}
+
+export default function App({ Component, pageProps }) {
+  return (
+    <>
+      <DefaultSeo {...defaultSEOConfig} />
+      <Component {...pageProps} />
+    </>
+  )
+}
+```
+
+### 12. src/pages/_document.js
+
+```javascript
+import { Html, Head, Main, NextScript } from 'next/document'
+
+export default function Document() {
+  return (
+    <Html lang="en">
+      <Head>
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />
+      </Head>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  )
+}
+```
+
+## Static Files
+
+### 13. public/robots.txt
+
+```
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://your-domain.com/sitemap.xml
+```
+
+## Usage Examples
+
+### Blog Post Page (App Router)
+
+```javascript
+// app/blog/[slug]/page.js
+import { generateBlogPostMetadata } from '@/lib/metadata'
+import { getBlogPost } from '@/lib/blog'
+
+export async function generateMetadata({ params }) {
+  const post = await getBlogPost(params.slug)
+  return generateBlogPostMetadata(post)
+}
+
+export default async function BlogPost({ params }) {
+  const post = await getBlogPost(params.slug)
+  
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <div dangerouslySetInnerHTML={{ __html: post.content }} />
+    </article>
+  )
+}
+```
+
+### Product Page with Schema (Pages Router)
+
+```javascript
+// pages/products/[id].js
+import { NextSeo } from 'next-seo'
+import JsonLd from '@/components/SEO/JsonLd'
+
+export default function ProductPage({ product }) {
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.images,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
+  }
+
+  return (
+    <>
+      <NextSeo
+        title={product.name}
+        description={product.description}
+        canonical={`https://your-domain.com/products/${product.id}`}
+        openGraph={{
+          title: product.name,
+          description: product.description,
+          images: product.images.map(img => ({ url: img })),
+        }}
+      />
+      <JsonLd data={productSchema} />
+      
+      <div>
+        <h1>{product.name}</h1>
+        <p>{product.description}</p>
+        <p>${product.price}</p>
+      </div>
+    </>
+  )
+}
+```
+
+## Build Process
+
+1. Run `npm run build` to build your application
+2. The `postbuild` script will automatically generate your sitemap
+3. Deploy your application with the generated sitemap and robots.txt
+
+## Best Practices
+
+1. **Test Your Setup**: Use tools like Google's Rich Results Test and Mobile-Friendly Test
+2. **Monitor Performance**: Use Google Search Console and PageSpeed Insights
+3. **Keep It Updated**: Regularly update your sitemap and meta tags
+4. **Optimize Images**: Always use the Next.js Image component for better performance
+5. **Structure Your URLs**: Use descriptive, SEO-friendly URLs
+
+This setup provides a solid foundation for SEO in Next.js applications with proper file organization and reusable components.
