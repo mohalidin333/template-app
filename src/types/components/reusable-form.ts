@@ -2,8 +2,6 @@ import { DefaultValues, FieldValues, Path } from "react-hook-form";
 import { ZodSchema } from "zod";
 import { ReactNode } from "react";
 
-
-
 export type ReusableFormFields<T extends FieldValues> = {
   label: string;
   name: Path<T>;

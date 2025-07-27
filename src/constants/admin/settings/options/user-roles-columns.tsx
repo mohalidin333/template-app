@@ -1,6 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Ellipsis } from "lucide-react";
-import { UsersColumnsProps } from "@/types/admin/users";
+import { ChevronDown } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -64,9 +63,9 @@ export const UserRolesColumns = ({
                   className="bg-white cursor-pointer"
                   onClick={() => {
                     if (item.name === "Edit") {
-                      handleEdit && handleEdit(data);
+                      handleEdit?.(data);
                     } else if (item.name === "Delete") {
-                      handleDelete && handleDelete(data.id);
+                      handleDelete?.(data.id);
                     }
                   }}
                 >

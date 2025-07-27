@@ -1,7 +1,7 @@
 import { Send, Trash2 } from "lucide-react";
 import React from "react";
 
-export default function ChatSection<T extends Record<string, any>>({
+export default function ChatSection<T extends Record<string, unknown>>({
   ChatItems,
 }: {
   ChatItems: T[];
@@ -31,7 +31,7 @@ export default function ChatSection<T extends Record<string, any>>({
             }  p-4 py-2 rounded-md`}
           >
             <div className="flex flex-col gap-2">
-              <p>{chat.message}</p>
+              <p>{chat.message as string}</p>
               <span
                 className={`${
                   chat.sender === "Me"
@@ -39,7 +39,7 @@ export default function ChatSection<T extends Record<string, any>>({
                     : "text-gray-600"
                 } text-xs`}
               >
-                {chat.timestamp}
+                {chat.timestamp as string}
               </span>
             </div>
           </li>

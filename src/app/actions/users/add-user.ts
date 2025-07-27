@@ -1,19 +1,22 @@
 "use server";
 
+import { Role } from "@/constants/role";
 import { createAdminClient } from "@/utils/supabase/client";
-import { RegisterSchema } from "@/validations/auth/register";
+import { UsersSchema } from "@/validations/admin/users";
 
-export async function register(formData: FormData) {
+export async function addUser(formData: FormData) {
   const supabase = await createAdminClient();
 
   const data = {
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
+    role: formData.get("role"),
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
   };
 
-  const result = RegisterSchema.safeParse(data);
+  const result = UsersSchema.safeParse(data);
   if (result.error) {
     return { success: false, error: result.error.flatten().fieldErrors };
   }
@@ -23,7 +26,7 @@ export async function register(formData: FormData) {
     email: data.email as string,
     password: data.password as string,
     user_metadata: {
-      role: "User",
+      role: data.role as Role,
       firstName: data.firstName as string,
       lastName: data.lastName as string,
     },

@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function ConversationSection<T extends Record<string, any>>({
+export default function ConversationSection<T extends Record<string, unknown>>({
   ConversationItems,
 }: {
   ConversationItems: T[];
@@ -17,13 +17,13 @@ export default function ConversationSection<T extends Record<string, any>>({
             <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
             <div className="flex-col flex">
               <div className="flex items-center gap-2">
-                <span className="font-medium">{conversation.name}</span>
+                <span className="font-medium">{conversation.name as string}</span>
                 <span className="text-xs text-gray-600">
-                  {conversation.timestamp}
+                  {conversation.timestamp as string}
                 </span>
               </div>
               <p className="text-sm text-gray-600 truncate max-w-[200px]">
-                {conversation.lastMessage}
+                {conversation.lastMessage as string}
               </p>
             </div>
           </li>

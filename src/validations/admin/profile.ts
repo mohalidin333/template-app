@@ -10,7 +10,7 @@ export const ProfileSchema = object({
   confirmPassword: string().refine(
     (value) => value === "" || value.length >= 6,
     "Confirm Password at least 6 characters"
-  ),
+  ).optional(),
 });
 
 export const ProfileDefaultValues = {

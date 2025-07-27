@@ -21,7 +21,7 @@ export default function Forgot() {
       <div className="w-full max-w-md space-y-8">
         <div className="space-y-2">
           <h1 className="title-semi-md text-center">Forgot</h1>
-          <p className="sub-title-sm text-center">We'll send you an email</p>
+          <p className="sub-title-sm text-center">We&apos;ll send you an email</p>
         </div>
         <ReusableForm
           fields={ForgotFields}

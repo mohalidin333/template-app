@@ -2,11 +2,9 @@
 import DashboardHeader from "@/components/admin/dashboard/header";
 import React, { useState } from "react";
 import { DateRange } from "react-day-picker";
-import { UsersData } from "@/constants/admin/users/data";
 import { AuditLogsData } from "@/constants/admin/audit-logs/data";
 import { FilterDate } from "@/utils/filter-date";
 import Cards from "@/components/admin/dashboard/cards";
-import DashboardCharts from "@/components/admin/dashboard/bar-chart";
 import Barchart from "@/components/admin/dashboard/bar-chart";
 
 export default function Dashboard() {
@@ -15,7 +13,7 @@ export default function Dashboard() {
   const filteredUsersData = FilterDate({
     dateFrom: date?.from,
     dateTo: date?.to,
-    data: UsersData,
+    data: [],
     dateField: "created_at",
   });
 

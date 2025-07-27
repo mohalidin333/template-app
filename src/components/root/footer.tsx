@@ -1,5 +1,5 @@
 import React from "react";
-import { Github, Twitter, Mail, Globe, Code, Heart } from "lucide-react";
+import { Github, Twitter, Mail, Globe, Heart } from "lucide-react";
 import Link from "next/link";
 import { FooterLinks } from "@/constants/root";
 
@@ -22,7 +22,7 @@ export default function Footer() {
             <p className="text-gray-400 text-sm max-w-md">
               Build and launch faster with QSoftX — a developer-friendly
               template designed to streamline setup and let you focus on your
-              app's core functionality.
+              app&apos;s core functionality.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social, index) => (

@@ -31,7 +31,7 @@ export default function Hero() {
             <p className="sub-title-lg">
               Build and launch faster with QSoftX — a developer-friendly
               template designed to streamline setup and let you focus on your
-              app's core functionality.
+              app&apos;s core functionality.
             </p>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { X, Printer, Shield } from "lucide-react";
 import { AuditLogsData } from "@/types/admin/audit-logs";
 

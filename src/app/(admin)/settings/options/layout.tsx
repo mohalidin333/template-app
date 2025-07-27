@@ -1,7 +1,7 @@
 import Link from "next/link";
 import React, { ReactNode } from "react";
 
-export const OptionLinks = [
+const OptionLinks = [
   {
     name: "User Roles",
     href: "/settings/options",

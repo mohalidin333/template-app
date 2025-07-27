@@ -303,22 +303,22 @@
     @apply bg-gray-50 text-muted-foreground px-2 py-1 rounded-md font-semibold text-xs border border-gray-200;
   }
   .badge-yellow {
-    @apply bg-yellow-50 text-yellow-800 px-2 py-1 rounded-md font-semibold text-xs;
+    @apply border border-yellow-200 bg-yellow-50 text-yellow-800 px-2 py-1 rounded-md font-semibold text-xs;
   }
   .badge-green {
-    @apply bg-green-50 text-green-800 px-2 py-1 rounded-md font-semibold text-xs;
+    @apply border border-green-200 bg-green-50 text-green-800 px-2 py-1 rounded-md font-semibold text-xs;
   }
   .badge-red {
-    @apply bg-red-50 text-red-800 px-2 py-1 rounded-md font-semibold text-xs;
+    @apply border border-red-200 bg-red-50 text-red-800 px-2 py-1 rounded-md font-semibold text-xs;
   }
   .badge-purple {
-    @apply bg-purple-50 text-purple-800 px-2 py-1 rounded-md font-semibold text-xs;
+    @apply border border-purple-200 bg-purple-50 text-purple-800 px-2 py-1 rounded-md font-semibold text-xs;
   }
   .badge-orange {
-    @apply bg-orange-50 text-orange-800 px-2 py-1 rounded-md font-semibold text-xs;
+    @apply border border-orange-200 bg-orange-50 text-orange-800 px-2 py-1 rounded-md font-semibold text-xs;
   }
   .badge-blue {
-    @apply bg-blue-50 text-blue-800 px-2 py-1 rounded-md font-semibold text-xs;
+    @apply border border-blue-200 bg-blue-50 text-blue-800 px-2 py-1 rounded-md font-semibold text-xs;
   }
 }
 

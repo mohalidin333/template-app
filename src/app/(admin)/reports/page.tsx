@@ -1,8 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import ReportsHeader from "@/components/admin/reports/header";
-import { UsersData } from "@/constants/admin/users/data";
-import { Printer } from "lucide-react";
 import { AuditLogsData } from "@/constants/admin/audit-logs/data";
 import UsersReportModal from "@/components/admin/reports/users-report";
 import AuditLogsReportModal from "@/components/admin/reports/audit-logs-report";
@@ -18,7 +16,7 @@ export default function Reports() {
   const filteredUsersData = FilterDate({
     dateFrom: date?.from,
     dateTo: date?.to,
-    data: UsersData,
+    data: [],
     dateField: "created_at",
   });
 

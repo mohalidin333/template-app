@@ -5,7 +5,6 @@ import { FilterRole } from "@/constants/admin/users/filter-role";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { Button } from "../../ui/button";
 import { Plus } from "lucide-react";
-import { UsersModalState } from "@/types/admin/users";
 
 export default function UsersHeader({
   handleFilter,

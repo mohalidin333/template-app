@@ -7,7 +7,7 @@ type FilterDateParams<T> = {
   dateField: keyof T;
 };
 
-export const FilterDate = <T extends Record<string, any>>({
+export const FilterDate = <T extends Record<string, unknown>>({
   dateFrom,
   dateTo,
   data,
@@ -24,7 +24,7 @@ export const FilterDate = <T extends Record<string, any>>({
     const dateValue = item[dateField];
     if (!dateValue) return false;
     
-    const itemDate = FormatDate(new Date(dateValue));
+    const itemDate = FormatDate(new Date(dateValue as string));
     return itemDate >= from && itemDate <= to;
   });
 };

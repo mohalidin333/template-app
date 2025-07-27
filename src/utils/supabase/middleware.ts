@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
     "/error",
   ];
 
-  const adminRoutes = ["/dashboard", "/profile", "/users"];
+  const adminRoutes = ["/dashboard", "/profile", "/users", "audit-logs", "/reports", "/backup-restore", "/settings/options"];
 
   const userRoutes = ["/user/dashboard", "/user/profile"];
 

@@ -8,6 +8,7 @@ export type UsersData = {
   email: string;
   role: "Admin" | "User";
   created_at: string;
+  avatar: string;
 };
 
 export type UsersColumnsProps = {

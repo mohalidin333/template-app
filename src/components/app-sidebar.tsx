@@ -13,12 +13,12 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarMenu as Menu } from "@/constants/menu/sidebar-menu";
 import { Fragment, useEffect, useState } from "react";
-import { Roles, Role } from "@/constants/role";
+import { Role } from "@/constants/role";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
-export function AppSidebar({role} : {role: Role}) {
+export function AppSidebar({ role }: { role: Role }) {
   const [isMounted, setIsMounted] = useState(false);
   const [isSubOpen, setIsSubOpen] = useState(false);
   const pathname = usePathname();
@@ -101,7 +101,9 @@ export function AppSidebar({role} : {role: Role}) {
         </SidebarGroup>
 
         <SidebarFooter className="p-0 absolute bottom-0 border-t w-full text-center bg-muted">
-          <p className="sub-title-semi-sm underline cursor-pointer">Powered by QSoftX</p>
+          <p className="sub-title-semi-sm underline cursor-pointer">
+            Powered by QSoftX
+          </p>
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>

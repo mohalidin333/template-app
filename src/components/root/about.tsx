@@ -43,8 +43,8 @@ export default function About() {
             <div className="section-sub-container">
               <h2 className="title-bold-xl">Why Choose QSoftX?</h2>
               <p className="sub-title-lg">
-                We understand the pain points of modern development. That's why
-                we've built a template that eliminates the friction and lets you
+                We understand the pain points of modern development. That&apos;s why
+                we&apos;ve built a template that eliminates the friction and lets you
                 focus on what you do best - creating amazing applications.
               </p>
             </div>

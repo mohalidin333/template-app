@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MessageCircle, Pen, Trash, UserLock } from "lucide-react";
+import Image from "next/image";
 
 const Actions = [
   {
@@ -40,15 +41,37 @@ export const UsersColumns = ({
   {
     accessorKey: "id",
     header: "ID",
+    cell: ({ row }) => {
+      return (
+        <span className="sub-title-sm">
+          {String(row.getValue("id")).slice(0, 4)}...
+        </span>
+      );
+    },
   },
   {
-    accessorKey: "firstName",
-    header: "First Name",
+    header: "User",
+    id: "user",
+    accessorFn: (row) => row,
+    cell: ({ row }) => {
+      const { avatar, firstName, lastName } = row.original;
+      return (
+        <div className="flex items-center gap-2">
+          <Image
+            width={40}
+            height={40}
+            src={avatar}
+            alt="avatar"
+            className="w-8 h-8 rounded-full"
+          />
+          <span>
+            {firstName} {lastName}
+          </span>
+        </div>
+      );
+    },
   },
-  {
-    accessorKey: "lastName",
-    header: "Last Name",
-  },
+
   {
     accessorKey: "email",
     header: "Email",
@@ -90,11 +113,11 @@ export const UsersColumns = ({
                   className="bg-white cursor-pointer"
                   onClick={() => {
                     if (item.name === "Chat") {
-                      handleChat && handleChat(data.id);
+                      handleChat?.(data.id);
                     } else if (item.name === "Edit") {
-                      handleEdit && handleEdit(data);
+                      handleEdit?.(data);
                     } else if (item.name === "Delete") {
-                      handleDelete && handleDelete(data.id);
+                      handleDelete?.(data.id);
                     }
                   }}
                 >

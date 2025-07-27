@@ -7,7 +7,6 @@ import { AuditLogsColumns } from "@/constants/admin/audit-logs/columns";
 import AuditLogsHeader from "@/components/admin/audit-logs/header";
 import { AuditLogsData } from "@/constants/admin/audit-logs/data";
 import { DateRange } from "react-day-picker";
-import { FormatDate } from "@/utils/format-date";
 import DeleteModal from "@/components/delete-modal";
 import { FilterDate } from "@/utils/filter-date";
 
