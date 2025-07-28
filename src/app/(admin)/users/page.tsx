@@ -116,7 +116,7 @@ export default function Users() {
 
     setIsSubmitting(false);
     setEditModal(false);
-    return toast.success("User added successfully", {
+    return toast.success("User updated successfully", {
       icon: <Check className="icon-base text-green-500 mt-1" />,
     });
   };

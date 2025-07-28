@@ -7,13 +7,46 @@ import { ResetSchema, ResetDefaultValues } from "@/validations/auth/reset";
 import React, { useState } from "react";
 import z from "zod";
 import Link from "next/link";
-import { RotateCw } from "lucide-react";
+import { Check, RotateCw, X } from "lucide-react";
+import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function Reset() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const handleSubmit = (data: z.infer<typeof ResetSchema>) => {
+  const router = useRouter();
+  const handleSubmit = async (data: z.infer<typeof ResetSchema>) => {
+    const supabase = createClient();
     setIsSubmitting(true);
-    console.log(data);
+
+    if (data.password !== data.confirmPassword) {
+      setIsSubmitting(false);
+      return toast.error("Passwords do not match", {
+        icon: <X className="icon-base text-red-500 mt-1" />,
+      });
+    }
+
+    const { error, data: userData } = await supabase.auth.updateUser({
+      password: data.password,
+    });
+
+    if (error) {
+      setIsSubmitting(false);
+      return toast.error(error.message, {
+        icon: <X className="icon-base text-red-500 mt-1" />,
+      });
+    }
+
+    const navigationPath =
+      userData.user?.user_metadata?.role === "admin"
+        ? "/dashboard"
+        : "/user/dashboard";
+    router.push(navigationPath);
+
+    setIsSubmitting(false);
+    return toast.success("Password reset successfully", {
+      icon: <Check className="icon-base text-green-500 mt-1" />,
+    });
   };
 
   return (
@@ -31,7 +64,11 @@ export default function Reset() {
           className="mb-4"
         >
           <div className="space-y-6">
-            <Button disabled={isSubmitting} type="submit" className="w-full">
+            <Button
+              disabled={isSubmitting}
+              type="submit"
+              className="cursor-pointer w-full"
+            >
               {isSubmitting ? (
                 <>
                   <RotateCw className="icon-base animate-spin" />

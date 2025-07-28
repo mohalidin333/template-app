@@ -6,14 +6,31 @@ import { ForgotFields } from "@/constants/auth/forgot";
 import { ForgotSchema, ForgotDefaultValues } from "@/validations/auth/forgot";
 import React, { useState } from "react";
 import z from "zod";
-import { RotateCw } from "lucide-react";
+import { Check, RotateCw, X } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
+import { forgot } from "@/app/actions/auth/forgot";
 
 export default function Forgot() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const handleSubmit = (data: z.infer<typeof ForgotSchema>) => {
+  const handleSubmit = async (data: z.infer<typeof ForgotSchema>) => {
     setIsSubmitting(true);
-    console.log(data);
+
+    const formData = new FormData();
+    formData.append("email", data.email);
+    const response = await forgot(formData);
+
+    if (!response.success) {
+      setIsSubmitting(false);
+      return toast.error(response.error as string, {
+        icon: <X className="icon-base text-red-500 mt-1" />,
+      });
+    }
+
+    setIsSubmitting(false);
+    return toast.success("Email sent", {
+      icon: <Check className="icon-base text-green-500 mt-1" />,
+    });
   };
 
   return (
